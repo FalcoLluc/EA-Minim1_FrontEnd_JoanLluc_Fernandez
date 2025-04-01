@@ -1,0 +1,109 @@
+<div class="content-div" *ngIf="!editingChange">
+    <table mat-table [dataSource]="dataSource" class="mat-elevation-z8" id="changes-table">
+      <!-- Delete Column -->
+      <ng-container matColumnDef="delete">
+        <th mat-header-cell *matHeaderCellDef>
+          <mat-checkbox (change)="toggleSelectAll($event)" [checked]="isAllSelected()" [indeterminate]="isIndeterminate()"></mat-checkbox>
+        </th>
+        <td mat-cell *matCellDef="let element">
+          <mat-checkbox [disabled]="element.isDeleted" (change)="toggleSelection(element, $event)" [checked]="isSelected(element)"></mat-checkbox>
+        </td>
+      </ng-container>
+  
+      <!-- Date Column -->
+      <ng-container matColumnDef="date">
+        <th mat-header-cell *matHeaderCellDef> Date </th>
+        <td mat-cell *matCellDef="let element" (click)="viewChangeDetails(element)"> 
+          {{element.date | date:'medium'}} 
+        </td>
+      </ng-container>
+  
+      <!-- User Column -->
+      <ng-container matColumnDef="user">
+        <th mat-header-cell *matHeaderCellDef> User </th>
+        <td mat-cell *matCellDef="let element" (click)="viewChangeDetails(element)"> 
+          {{element.user | slice:0:8}}... 
+        </td>
+      </ng-container>
+  
+      <!-- Calendar Column -->
+      <ng-container matColumnDef="calendar">
+        <th mat-header-cell *matHeaderCellDef> Calendar </th>
+        <td mat-cell *matCellDef="let element" (click)="viewChangeDetails(element)"> 
+          {{element.calendar | slice:0:8}}... 
+        </td>
+      </ng-container>
+  
+      <!-- Action Type Column -->
+      <ng-container matColumnDef="actionType">
+        <th mat-header-cell *matHeaderCellDef> Action </th>
+        <td mat-cell *matCellDef="let element" (click)="viewChangeDetails(element)"> 
+          {{getActionType(element)}}
+        </td>
+      </ng-container>
+  
+      <!-- isDeleted Column -->
+      <ng-container matColumnDef="isDeleted">
+        <th mat-header-cell *matHeaderCellDef> Status </th>
+        <td mat-cell *matCellDef="let element">
+          {{element.isDeleted ? 'Deleted' : 'Active'}}
+          <!-- Restore button for deleted changes -->
+          <button *ngIf="element.isDeleted" mat-raised-button color="primary" (click)="restoreChange(element)">
+            Restore
+          </button>
+        </td>
+      </ng-container>
+  
+      <!-- Header Row -->
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+  
+      <!-- Data Row -->
+      <tr mat-row *matRowDef="let row; columns: displayedColumns; let entry;" [ngClass]="{'deleted-row': entry.isDeleted}"></tr>
+    </table>
+  
+    <mat-paginator [pageSizeOptions]="[1, 5, 10, 20, 50]" [pageSize]="pageSize" [pageIndex]="page" 
+      (page)="handlePageChange($event)" [length]="length"></mat-paginator>
+  
+    <button mat-fab extended color="accent" (click)="deleteSelected()" id="delete-changes-btn" *ngIf="selectedChanges.size > 0">
+      <mat-icon>delete</mat-icon>
+      Delete Changes
+    </button>
+  </div>
+  
+  <div class="content-div twocols" *ngIf="originalChange">
+    <div class="column">
+      <button mat-stroked-button (click)="closeForm()">Go back</button>
+      <h2>Change details:</h2>
+      <p><span class="info-key">Date:</span> {{originalChange.date | date:'medium'}}</p>
+      <p><span class="info-key">Action:</span> {{getActionType(originalChange)}}</p>
+      
+      <div *ngIf="userDetails">
+        <p><span class="info-key">User:</span> {{userDetails.name}} ({{userDetails._id}})</p>
+        <p><span class="info-key">Email:</span> {{userDetails.mail}}</p>
+      </div>
+      
+      <div *ngIf="calendarDetails">
+        <p><span class="info-key">Calendar:</span> {{calendarDetails.calendarName}} ({{calendarDetails._id}})</p>
+      </div>
+    </div>
+  
+    <div class="column">
+      <h2>Changes made:</h2>
+      <table class="changes-table">
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Before</th>
+            <th>After</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let change of compareStates(originalChange.previousState, originalChange.newState)">
+            <td>{{change.field}}</td>
+            <td>{{change.before}}</td>
+            <td>{{change.after}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
